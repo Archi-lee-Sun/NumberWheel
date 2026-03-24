@@ -1,0 +1,299 @@
+/* ─────────────────────────────────────────
+   DESIGN TOKENS
+───────────────────────────────────────── */
+:root {
+  --bg:            #0F172A;
+  --surface:       #1E293B;
+  --surface-raised:#253047;
+  --text-primary:  #F8FAFC;
+  --text-secondary:#CBD5E1;
+  --text-muted:    #64748B;
+  --pointer:       #FACC15;
+  --btn-bg:        #3B82F6;
+  --btn-hover:     #2563EB;
+  --btn-active:    #1D4ED8;
+  --border:        rgba(255, 255, 255, 0.08);
+  --radius-sm:     8px;
+  --radius-md:     14px;
+  --radius-lg:     22px;
+  --radius-full:   9999px;
+  --shadow-wheel:  0 0 60px rgba(59, 130, 246, 0.12), 0 20px 60px rgba(0, 0, 0, 0.5);
+  --transition:    0.18s ease;
+}
+
+/* ─────────────────────────────────────────
+   RESET + BASE
+───────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─────────────────────────────────────────
+   PAGE WRAPPER
+───────────────────────────────────────── */
+.page-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "header   header"
+    "wheel    controls";
+  align-items: center;
+  gap: 0 2rem;
+  width: 100%;
+  max-width: 860px;
+  padding: 1rem 1.5rem;
+  height: 100vh;
+  max-height: 100vh;
+}
+
+/* ─────────────────────────────────────────
+   HEADER
+───────────────────────────────────────── */
+.header {
+  grid-area: header;
+  text-align: center;
+  padding-bottom: 0.6rem;
+}
+
+.title {
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.subtitle {
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+/* ─────────────────────────────────────────
+   WHEEL SECTION
+───────────────────────────────────────── */
+.wheel-section {
+  grid-area: wheel;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.pointer-wrapper {
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+  margin-bottom: -2px;
+}
+
+.pointer {
+  width: 0;
+  height: 0;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-top: 24px solid var(--pointer);
+}
+
+.wheel-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(52vh, 460px);
+  height: min(52vh, 460px);
+}
+
+.wheel-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow: var(--shadow-wheel);
+}
+
+.wheel-center-cap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--surface-raised);
+}
+
+/* ─────────────────────────────────────────
+   CONTROLS
+───────────────────────────────────────── */
+.controls {
+  grid-area: controls;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  width: 100%;
+}
+
+.range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.6rem 1.2rem;
+  width: 100%;
+  max-width: 280px;
+  justify-content: center;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.input-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.number-input {
+  width: 70px;
+  padding: 6px 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.input-divider {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 14px;
+}
+
+.spin-btn {
+  width: 100%;
+  max-width: 280px;
+  padding: 12px 0;
+  border-radius: var(--radius-lg);
+  background: var(--btn-bg);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.spin-btn:hover {
+  background: var(--btn-hover);
+}
+
+.spin-btn:active {
+  background: var(--btn-active);
+  transform: scale(0.98);
+}
+
+/* ─────────────────────────────────────────
+   RESULT DISPLAY
+───────────────────────────────────────── */
+/* Hidden by default — shown only after first spin */
+.result-display {
+  display: none;               /* hidden until first spin */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem 2rem;
+  width: 100%;
+  max-width: 280px;
+  min-height: 110px;
+}
+
+.result-display.visible {
+  display: flex;
+}
+
+.result-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.result-number {
+  font-size: clamp(2.8rem, 6vw, 4.2rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  background: transparent;
+  border: none;
+}
+
+.result-number.pop {
+  animation: pop 0.3s ease forwards;
+}
+
+@keyframes pop {
+  0%   { transform: scale(0.7); opacity: 0.4; }
+  65%  { transform: scale(1.1); }
+  100% { transform: scale(1);   opacity: 1;   }
+}
+
+/* ─────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────── */
+@media (max-width: 640px) {
+  html, body {
+    overflow: auto;
+  }
+
+  .page-wrapper {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "wheel"
+      "controls";
+    gap: 1rem 0;
+    height: auto;
+  }
+
+  .wheel-container {
+    width: min(80vw, 320px);
+    height: min(80vw, 320px);
+  }
+}

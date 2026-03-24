@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Number Wheel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+/* ─────────────────────────────────────────
+   DESIGN TOKENS
+───────────────────────────────────────── */
+:root {
+  --bg-center:         #1a1040;
+  --bg-edge:           #0a0618;
+  --surface:           rgba(255,255,255,0.06);
+  --surface-raised:    rgba(255,255,255,0.1);
+  --surface-border:    rgba(255,255,255,0.12);
+  --text-primary:      #F0EAFF;
+  --text-secondary:    #B8A9D9;
+  --text-muted:        #7B6A9A;
+  --pointer-color:     #FF6B6B;
+  --pointer-glow:      rgba(255,107,107,0.6);
+  --accent-a:          #A855F7;
+  --accent-b:          #6366F1;
+  --accent-glow:       rgba(139,92,246,0.4);
+  --result-glow:       rgba(250,204,21,0.35);
+  --btn-a:             #7C3AED;
+  --btn-b:             #4F46E5;
+  --radius-sm:         10px;
+  --radius-md:         18px;
+  --radius-lg:         28px;
+  --radius-full:       9999px;
+  --transition:        0.22s cubic-bezier(.4,0,.2,1);
+  --transition-slow:   0.4s cubic-bezier(.4,0,.2,1);
+}
+
+/* ─────────────────────────────────────────
+   RESET + BASE
+───────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Nunito', system-ui, sans-serif;
+  background: radial-gradient(ellipse at 40% 40%, #231060 0%, #130830 45%, #060310 100%);
+  color: var(--text-primary);
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-font-smoothing: antialiased;
+  /* Subtle star-like grain texture overlay */
+  position: relative;
+}
+
+/* Atmospheric glow blobs */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(80px);
+}
+body::before {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(120,60,220,0.18) 0%, transparent 70%);
+  top: -100px; left: -100px;
+}
+body::after {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(60,90,220,0.14) 0%, transparent 70%);
+  bottom: -80px; right: -80px;
+}
+
+/* ─────────────────────────────────────────
+   PAGE WRAPPER
+───────────────────────────────────────── */
+.page-wrapper {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "header   header"
+    "wheel    controls";
+  align-items: center;
+  gap: 0 2.5rem;
+  width: 100%;
+  max-width: 880px;
+  padding: 1rem 1.5rem;
+  height: 100vh;
+  max-height: 100vh;
+}
+
+/* ─────────────────────────────────────────
+   HEADER
+───────────────────────────────────────── */
+.header {
+  grid-area: header;
+  text-align: center;
+  padding-bottom: 0.75rem;
+}
+
+.title {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  background: linear-gradient(135deg, #D8B4FE 0%, #A78BFA 40%, #818CF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  margin-top: 0.3rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+/* ─────────────────────────────────────────
+   WHEEL SECTION
+───────────────────────────────────────── */
+.wheel-section {
+  grid-area: wheel;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pointer */
+.pointer-wrapper {
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+  margin-bottom: -4px;
+  filter: drop-shadow(0 0 10px var(--pointer-glow))
+          drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+}
+
+.pointer {
+  width: 0;
+  height: 0;
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-top: 32px solid var(--pointer-color);
+  position: relative;
+  transition: filter var(--transition);
+}
+
+/* Wheel container */
+.wheel-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(52vh, 460px);
+  height: min(52vh, 460px);
+  /* Outer ring glow */
+  filter: drop-shadow(0 0 32px rgba(120,60,220,0.28))
+          drop-shadow(0 20px 50px rgba(0,0,0,0.6));
+}
+
+/* Decorative orbit ring behind wheel */
+.wheel-container::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(168,85,247,0.25),
+    rgba(99,102,241,0.25),
+    rgba(236,72,153,0.25),
+    rgba(168,85,247,0.25)
+  );
+  filter: blur(8px);
+  z-index: -1;
+}
+
+.wheel-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  /* Inner bevel shadow for depth */
+  box-shadow:
+    inset 0 4px 20px rgba(255,255,255,0.08),
+    inset 0 -4px 20px rgba(0,0,0,0.4),
+    0 0 0 4px rgba(255,255,255,0.07),
+    0 0 0 8px rgba(120,60,220,0.12);
+}
+
+.wheel-center-cap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.15), rgba(30,15,60,0.95));
+  border: 3px solid rgba(255,255,255,0.15);
+  box-shadow:
+    0 4px 14px rgba(0,0,0,0.5),
+    inset 0 1px 2px rgba(255,255,255,0.2);
+}
+
+/* ─────────────────────────────────────────
+   CONTROLS
+───────────────────────────────────────── */
+.controls {
+  grid-area: controls;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+/* Controls panel — glassmorphism card */
+.controls-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 300px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: var(--radius-lg);
+  padding: 1.6rem 1.4rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* Range inputs row */
+.range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+}
+
+.input-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.number-input {
+  width: 100%;
+  padding: 9px 10px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-family: 'Sora', sans-serif;
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+  outline: none;
+  -moz-appearance: textfield;
+}
+.number-input::-webkit-outer-spin-button,
+.number-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.number-input:focus {
+  border-color: rgba(168,85,247,0.6);
+  background: rgba(168,85,247,0.08);
+  box-shadow: 0 0 0 3px rgba(168,85,247,0.18);
+}
+.number-input:hover:not(:focus) {
+  border-color: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+}
+
+.input-divider {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-top: 20px;
+  flex-shrink: 0;
+}
+
+/* ── SPIN BUTTON ── */
+.spin-btn {
+  width: 100%;
+  padding: 14px 0;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 40%, #4338CA 100%);
+  color: #fff;
+  font-family: 'Sora', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform var(--transition),
+    box-shadow var(--transition),
+    filter var(--transition);
+  box-shadow:
+    0 4px 20px rgba(109,40,217,0.5),
+    0 1px 0 rgba(255,255,255,0.12) inset,
+    0 -1px 0 rgba(0,0,0,0.2) inset;
+}
+
+/* Sheen overlay */
+.spin-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, transparent 60%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Ripple glow on hover */
+.spin-btn::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #A855F7, #6366F1);
+  opacity: 0;
+  filter: blur(8px);
+  z-index: -1;
+  transition: opacity var(--transition-slow);
+}
+
+.spin-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 8px 32px rgba(109,40,217,0.65),
+    0 1px 0 rgba(255,255,255,0.18) inset;
+  filter: brightness(1.08);
+}
+.spin-btn:hover::after {
+  opacity: 1;
+}
+
+.spin-btn:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow:
+    0 2px 10px rgba(109,40,217,0.4),
+    0 1px 0 rgba(255,255,255,0.08) inset;
+  filter: brightness(0.95);
+}
+
+.spin-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  pointer-events: none;
+}
+
+/* ── RESULT DISPLAY ── */
+.result-display {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(250,204,21,0.06);
+  border: 1.5px solid rgba(250,204,21,0.22);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 2rem;
+  width: 100%;
+  min-height: 110px;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow var(--transition-slow);
+}
+
+.result-display.visible {
+  display: flex;
+  box-shadow:
+    0 0 32px rgba(250,204,21,0.18),
+    0 0 8px rgba(250,204,21,0.12) inset;
+  animation: resultReveal 0.35s cubic-bezier(.4,0,.2,1) both;
+}
+
+@keyframes resultReveal {
+  from { opacity: 0; transform: scale(0.95) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Shimmer sweep */
+.result-display::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(250,204,21,0.06), transparent);
+  animation: shimmer 2.5s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%   { left: -100%; }
+  50%  { left: 150%; }
+  100% { left: 150%; }
+}
+
+.result-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(250,204,21,0.6);
+}
+
+.result-number {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(2.8rem, 6vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1;
+  color: #FBBF24;
+  letter-spacing: -0.04em;
+  background: none;
+  border: none;
+  text-shadow: 0 0 24px rgba(251,191,36,0.5);
+}
+
+.result-number.pop {
+  animation: pop 0.35s cubic-bezier(.4,0,.2,1) forwards;
+}
+
+@keyframes pop {
+  0%   { transform: scale(0.65); opacity: 0.3; }
+  60%  { transform: scale(1.12); }
+  100% { transform: scale(1);    opacity: 1;   }
+}
+
+/* ─────────────────────────────────────────
+   HISTORY CHIPS  (if present in HTML)
+───────────────────────────────────────── */
+.history-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  width: 100%;
+}
+
+.history-chip {
+  padding: 3px 11px;
+  border-radius: var(--radius-full);
+  background: rgba(168,85,247,0.12);
+  border: 1px solid rgba(168,85,247,0.22);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  transition: background var(--transition), color var(--transition);
+}
+.history-chip:hover {
+  background: rgba(168,85,247,0.22);
+  color: var(--text-primary);
+}
+
+/* ─────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────── */
+@media (max-width: 640px) {
+  html, body { overflow: auto; }
+
+  .page-wrapper {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "wheel"
+      "controls";
+    gap: 1rem 0;
+    height: auto;
+    padding-bottom: 2rem;
+  }
+
+  .wheel-container {
+    width: min(80vw, 320px);
+    height: min(80vw, 320px);
+  }
+
+  .controls-panel {
+    max-width: 100%;
+    padding: 1.2rem 1rem;
+  }
+}
+    </style>
+  </head>
+
+  <body>
+
+    <div class="page-wrapper">
+
+      <!-- ── Title ── -->
+      <header class="header">
+        <h1 class="title">Number Wheel</h1>
+        <p class="subtitle">Spin the wheel and let fate decide ✨</p>
+      </header>
+
+      <!-- ── Wheel area ── -->
+      <main class="wheel-section">
+
+        <div class="pointer-wrapper">
+          <div id="pointer" class="pointer"></div>
+        </div>
+
+        <div class="wheel-container">
+          <canvas id="wheel" class="wheel-canvas" width="420" height="420"></canvas>
+          <div class="wheel-center-cap"></div>
+        </div>
+
+      </main>
+
+      <!-- ── Controls ── -->
+      <section class="controls">
+
+        <div class="controls-panel">
+
+          <!-- Min / Max inputs -->
+          <div class="range-inputs">
+            <div class="input-group">
+              <label class="input-label" for="minValue">Min</label>
+              <input class="number-input" id="minValue" type="number" value="1" min="-9999" max="9999" />
+            </div>
+            <span class="input-divider">—</span>
+            <div class="input-group">
+              <label class="input-label" for="maxValue">Max</label>
+              <input class="number-input" id="maxValue" type="number" value="10" min="-9999" max="9999" />
+            </div>
+          </div>
+
+          <!-- Spin button -->
+          <button id="spinBtn" class="spin-btn" type="button">
+            <span class="spin-btn-text">🎰 Spin!</span>
+          </button>
+
+          <!-- Result display -->
+          <div id="resultDisplay" class="result-display">
+            <span class="result-label">Result</span>
+            <span id="resultNumber" class="result-number">—</span>
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+    <script>
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+const spinBtn = document.getElementById('spinBtn');
+const resultEl = document.getElementById('resultNumber');
+const resultDisplay = document.getElementById('resultDisplay');
+const minInput = document.getElementById('minValue');
+const maxInput = document.getElementById('maxValue');
+
+/* Harmonious analogous palette: violet → indigo → blue → teal → purple → pink → rose */
+const COLORS = [
+  '#7C3AED','#6366F1','#3B82F6','#0EA5E9',
+  '#A855F7','#EC4899','#F43F5E','#8B5CF6',
+];
+
+const cx = canvas.width / 2;
+const cy = canvas.height / 2;
+const radius = 200;
+
+let currentAngle = 0;
+let isSpinning = false;
+let segmentNumbers = [];
+let history = [];
+
+function getRange() {
+  const min = parseInt(minInput.value);
+  const max = parseInt(maxInput.value);
+  return { min, max, count: max - min + 1 };
+}
+
+function fillSegments(min, max) {
+  segmentNumbers = [];
+  for (let i = min; i <= max; i++) segmentNumbers.push(i);
+}
+
+function drawWheel(rotationAngle) {
+  const { min, max, count } = getRange();
+  if (isNaN(min) || isNaN(max) || count < 1) return;
+  fillSegments(min, max);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const sliceAngle = (2 * Math.PI) / count;
+
+  for (let i = 0; i < count; i++) {
+    const startAngle = rotationAngle + i * sliceAngle;
+    const endAngle = startAngle + sliceAngle;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radius, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = COLORS[i % COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    if (count <= 36) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(startAngle + sliceAngle / 2);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      const fontSize = count <= 10 ? 16 : count <= 20 ? 13 : 10;
+      ctx.font = `800 ${fontSize}px 'Sora', sans-serif`;
+      ctx.shadowColor = 'rgba(0,0,0,0.4)';
+      ctx.shadowBlur = 4;
+      ctx.fillText(segmentNumbers[i], radius - 14, 6);
+      ctx.restore();
+    }
+  }
+
+  /* Radial highlight overlay for 3D depth */
+  const highlight = ctx.createRadialGradient(cx - 50, cy - 60, 10, cx, cy, radius);
+  highlight.addColorStop(0, 'rgba(255,255,255,0.12)');
+  highlight.addColorStop(0.5, 'rgba(255,255,255,0.03)');
+  highlight.addColorStop(1, 'rgba(0,0,0,0.18)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fillStyle = highlight;
+  ctx.fill();
+}
+
+function easeOut(t) {
+  return 1 - Math.pow(1 - t, 4);
+}
+
+function spin() {
+  if (isSpinning) return;
+  const { min, max, count } = getRange();
+  if (isNaN(min) || isNaN(max) || count < 1) return;
+
+  const resultIndex = Math.floor(Math.random() * count);
+  const result = min + resultIndex;
+  const sliceAngle = (2 * Math.PI) / count;
+  const segmentCenter = resultIndex * sliceAngle + sliceAngle / 2;
+  const targetAngle = -Math.PI / 2 - segmentCenter;
+  const fullSpins = 2 * Math.PI * (6 + Math.floor(Math.random() * 4));
+  const finalAngle = targetAngle + fullSpins;
+  const duration = 3000 + Math.random() * 800;
+  const startAngle = currentAngle;
+  const startTime = performance.now();
+
+  isSpinning = true;
+  spinBtn.disabled = true;
+  resultDisplay.classList.remove('visible');
+
+  function frame(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(elapsed / duration, 1);
+    currentAngle = startAngle + (finalAngle - startAngle) * easeOut(t);
+    drawWheel(currentAngle);
+
+    if (t < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      isSpinning = false;
+      spinBtn.disabled = false;
+      resultEl.textContent = result;
+      resultDisplay.classList.add('visible');
+      resultEl.classList.remove('pop');
+      void resultEl.offsetWidth;
+      resultEl.classList.add('pop');
+      resultEl.addEventListener('animationend', () => resultEl.classList.remove('pop'), { once: true });
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
+spinBtn.addEventListener('click', spin);
+minInput.addEventListener('input', () => { if (!isSpinning) drawWheel(currentAngle); });
+maxInput.addEventListener('input', () => { if (!isSpinning) drawWheel(currentAngle); });
+
+drawWheel(0);
+    </script>
+
+  </body>
+</html>
